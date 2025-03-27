@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SequelizeMeta {
+  name String @id
+}
+
+model Member {
+  id            Int      @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String   @unique
+  password      String
+  phoneNumber   String?
+  birthDate     DateTime?
+  address       String?
+  city          String?
+  country       String?
+  status        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User?
+  roleMandates  RoleMandate[]
+  commissionHistory CommissionHistory[]
+  trainings     Training[]    @relation("Trainer")
+  reports       Report[]      @relation("SubmittedReports")
+  approvedReports Report[]    @relation("ApprovedReports")
+  exports       Export[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  roleId    Int?
+  memberId  Int?     @unique
+  lastLogin DateTime?
+  status    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  role    Role?    @relation(fields: [roleId], references: [id])
+  member  Member?  @relation(fields: [memberId], references: [id])
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  permissions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           Int      @id @default(autoincrement())
+  roleId       Int?
+  permissionId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  role        Role?       @relation(fields: [roleId], references: [id])
+  permission  Permission? @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+model Commission {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  history     CommissionHistory[]
+  meetings    Meeting[]
+}
+
+model CommissionHistory {
+  id           Int      @id @default(autoincrement())
+  commissionId Int
+  memberId     Int
+  role         String
+  startDate    DateTime
+  endDate      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  commission   Commission @relation(fields: [commissionId], references: [id])
+  member       Member     @relation(fields: [memberId], references: [id])
+}
+
+model RoleMandate {
+  id        Int      @id @default(autoincrement())
+  memberId  Int
+  role      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  member    Member   @relation(fields: [memberId], references: [id])
+}
+
+model Training {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  trainer         Int?
+  date           DateTime
+  duration       Int?
+  location       String?
+  maxParticipants Int?
+  status         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  trainerMember  Member?  @relation("Trainer", fields: [trainer], references: [id])
+}
+
+model Meeting {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String?
+  date         DateTime
+  location     String?
+  type         String
+  commissionId Int?
+  status       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  commission   Commission? @relation(fields: [commissionId], references: [id])
+  reports      Report[]
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  meetingId   Int?
+  content     String
+  type        String
+  status      String?
+  submittedBy Int?
+  approvedBy  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  meeting     Meeting?    @relation(fields: [meetingId], references: [id])
+  submitter   Member?     @relation("SubmittedReports", fields: [submittedBy], references: [id])
+  approver    Member?     @relation("ApprovedReports", fields: [approvedBy], references: [id])
+  attachments Attachment[]
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  reportId  Int?
+  filename  String
+  path      String
+  type      String?
+  size      Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  report    Report?   @relation(fields: [reportId], references: [id])
+}
+
+model Export {
+  id          Int      @id @default(autoincrement())
+  type        String
+  format      String
+  filters     Json?
+  status      String?
+  filePath    String?
+  requestedBy Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  requester   Member?  @relation(fields: [requestedBy], references: [id])
+}

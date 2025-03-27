@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "jci_user",
+    "password": "zanb@",
+    "database": "jci_db",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "jci_user",
+    "password": "zanb@",
+    "database": "jci_db_test",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "jci_user",
+    "password": "zanb@",
+    "database": "jci_db",
+    "host": "localhost",
+    "dialect": "postgres"
+  }
+}
